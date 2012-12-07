@@ -53,6 +53,13 @@
 1. 在命令提示符中执行`python chnroutes.py -p win`，这将生成`vpnup.bat`和`vpndown.bat`两个文件；
 2. 在拨号前手动执行`vpnup.bat`文件设置路由表；在断开VPN后，可运行`vpndown.bat`清理路由表。
 
+## Cisco IPSec
+### Mac OS X
+
+1. 在终端中执行`python chnroutes.py -p mac -t ipsec`，这将生成`phase1-up.sh`和`phase1-down.sh`两个文件；
+2. Mac OS X 系统支持 Cisco IPSec 的后台使用的是 racoon，但是不会像 PPTP 一样自动调用启动脚本，如果需要自动调用脚本，需要自己修改配置文件，并自己从命令行启动；
+3. 推荐手动执行`phase1-up.sh`设置路由表；而只有在网络环境变化的时候，需要运行`phase1-down.sh`再运行`phase1-up.sh`来重新设置路由表。
+
 ## 基于Linux的第三方系统的路由器
 
 一些基于Linux系统的第三方路由器系统如OpenWRT、DD-WRT、Tomato都带有VPN（PPTP/OpenVPN）客户端的，也就是说，我们只需要在路由器进行VPN拨号，并利用本项目提供的路由表脚本就可以把VPN针对性翻墙扩展到整个局域网。当然，使用这个方式也是会带来副作用，即局域网的任何机器都不适合使用Emule或者BT等P2P下载软件。但对于那些不使用P2P，希望在路由器上设置针对性翻墙的用户，这方法十分有用，因为只需要一个VPN帐号，局域网内的所有机器，包括使用Wi-Fi的手机都能自动翻墙。详细配置方式请参考[Autoddvpn](http://code.google.com/p/autoddvpn/)项目。
