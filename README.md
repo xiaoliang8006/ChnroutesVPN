@@ -1,4 +1,4 @@
-# chnroutes
+﻿# chnroutes
 
 利用来自[APNIC](http://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest)的数据生成路由命令脚本，让VPN客户端在连接时自动执行。通过这些路由脚本，可以让用户在使用VPN作为默认网关时，不使用VPN访问中国国内IP，从而减轻VPN负担，并提高访问国内网站的速度。
 
@@ -67,3 +67,25 @@
 ## 信息反馈
 
 本项目的脚本都是在使用路由器进行拨号的情况下测试通过的，如果在其它拨号方式下，脚本不能运作，请添加新的Issue。另外，在配合OpenVPN使用的时候，可能会出现因为网络质量不好，OpenVPN非主动断开，这时候`vpn-down.sh`脚本也会被自动调用，但重新连上之后，可能会找不到默认路由而添加失败，这时候你可以通过停止OpenVPN，并手动设置好原来的默认路由再重新进行OpenVPN拨号。
+
+
+
+
+
+
+
+
+
+@echo off
+rem 打cmd
+rem 输入ipconfig /all  | find /i "IP address"
+rem 发现两行东西显示
+rem 两行作文本文件传送给for程序体析
+rem tokens=15表示文本文件第15参数始读取
+rem 默认隔符空格
+rem 第15显示IP
+rem 几网络连接几ip
+
+for /f %%i in ('ipconfig /all  | find /i "默认网关"') do set gateway=%%i
+echo 当前网关：%gateway%
+pause
