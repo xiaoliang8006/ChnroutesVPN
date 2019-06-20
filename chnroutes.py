@@ -22,9 +22,9 @@ def generate_mac(_):
 #!/bin/sh
 #export PATH="/bin:/sbin:/usr/sbin:/usr/bin"
 
-OLDGW=`netstat -nr | grep '^default' | grep -v 'utun' | sed 's/default *\([0-9\.]*\) .*/\1/'`
-echo $OLDGW
-echo "${OLDGW}" > /tmp/temp.txt
+TEMP=`netstat -nr | grep '^default' | grep -v 'utun' | sed 's/default *\([0-9\.]*\) .*/\1/'`
+echo "${TEMP}" > /tmp/temp.txt
+OLDGW=`head -1 /tmp/temp.txt`
 
 dscacheutil -flushcache
 
@@ -39,7 +39,7 @@ if [ ! -e /tmp/temp.txt ]; then
         exit 0
 fi
 
-OLDGW=`cat /tmp/temp.txt`
+OLDGW=`head -1 /tmp/temp.txt`
 """
 
     upfile = open('./macOS/addRoute.sh', 'w')
@@ -64,7 +64,7 @@ def generate_win(metric):
     results = fetch_ip_data()
 
     upscript_header = """\
-    
+
 :start
 
 for /F %%i in ('ping www.baidu.com -n 1') do (set com=%%i)
