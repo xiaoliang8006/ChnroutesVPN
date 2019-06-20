@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-
+#-*- coding: UTF-8 -*-
+#python2.7
 import argparse
 import math
 import os
@@ -8,182 +8,42 @@ import subprocess
 import sys
 import urllib2
 
-def generate_ovpn(_):
-    results = fetch_ip_data()
-
-    upscript_header = """\
-#!/bin/bash -
-
-export PATH="/bin:/sbin:/usr/sbin:/usr/bin"
-OLDGW=$(ip route show 0/0 | sed -e 's/^default//')
-
-ip -batch - <<EOF
-"""
-    downscript_header = """\
-#!/bin/bash -
-
-export PATH="/bin:/sbin:/usr/sbin:/usr/bin"
-ip -batch - <<EOF
-"""
-
-    upfile = open('vpn-up.sh', 'w')
-    downfile = open('vpn-down.sh', 'w')
-
-    upfile.write(upscript_header)
-    downfile.write(downscript_header)
-
-    for ip, _, mask in results:
-        upfile.write('route add %s/%s $OLDGW\n' % (ip, mask))
-        downfile.write('route del %s/%s\n' % (ip, mask))
-
-    upfile.write('EOF\n')
-    downfile.write('EOF\n')
-
-    upfile.close()
-    downfile.close()
-
-    os.chmod('vpn-up.sh', 00755)
-    os.chmod('vpn-down.sh', 00755)
-
-def generate_old(metric):
-    results = fetch_ip_data()
-
-    rfile = open('routes.txt','w')
-
-    rfile.write('max-routes %d\n\n' % (len(results) + 20))
-
-    for ip, mask, _ in results:
-        rfile.write("route %s %s net_gateway %d\n" % (ip, mask, metric))
-
-    rfile.close()
-
 def generate_linux(metric):
-    results = fetch_ip_data()
+###########################################
+#
+###########################################
+    pass
 
-    upscript_header = """\
-#!/bin/bash -
-
-OLDGW=$(ip route show 0/0 | head -n1 | grep 'via' | grep -Po '\d+\.\d+\.\d+\.\d+')
-
-if [ $OLDGW == '' ]; then
-    exit 0
-fi
-
-if [ ! -e /tmp/vpn_oldgw ]; then
-    echo $OLDGW > /tmp/vpn_oldgw
-fi
-
-ip -batch - <<EOF
-"""
-
-    downscript_header = """\
-#!/bin/bash
-export PATH="/bin:/sbin:/usr/sbin:/usr/bin"
-
-OLDGW=$(cat /tmp/vpn_oldgw)
-
-ip -batch - <<EOF
-"""
-
-    upfile = open('ip-pre-up', 'w')
-    downfile = open('ip-down', 'w')
-
-    upfile.write(upscript_header)
-    downfile.write(downscript_header)
-
-    for ip, _, mask in results:
-        upfile.write('route add %s/%s via $OLDGW metric %s\n' %
-                     (ip, mask, metric))
-        downfile.write('route del %s/%s\n' % (ip, mask))
-
-    upfile.write('EOF\n')
-    downfile.write('''\
-EOF
-
-rm /tmp/vpn_oldgw
-''')
-
-    upfile.close()
-    downfile.close()
-
-    os.chmod('ip-pre-up', 00755)
-    os.chmod('ip-down', 00755)
 
 def generate_mac(_):
     results = fetch_ip_data()
 
     upscript_header = """\
 #!/bin/sh
-export PATH="/bin:/sbin:/usr/sbin:/usr/bin"
+#export PATH="/bin:/sbin:/usr/sbin:/usr/bin"
 
-OLDGW=`netstat -nr | grep '^default' | grep -v 'ppp' | sed 's/default *\\([0-9\.]*\\) .*/\\1/'`
-
-if [ ! -e /tmp/pptp_oldgw ]; then
-    echo "${OLDGW}" > /tmp/pptp_oldgw
-fi
-
-dscacheutil -flushcache
-"""
-
-    downscript_header = """\
-#!/bin/sh
-export PATH="/bin:/sbin:/usr/sbin:/usr/bin"
-
-if [ ! -e /tmp/pptp_oldgw ]; then
-        exit 0
-fi
-
-OLDGW=`cat /tmp/pptp_oldgw`
-"""
-
-    upfile = open('ip-up','w')
-    downfile = open('ip-down','w')
-
-    upfile.write(upscript_header)
-    downfile.write(downscript_header)
-
-    for ip, _, mask in results:
-        upfile.write('route add %s/%s "${OLDGW}"\n' % (ip, mask))
-        downfile.write('route delete %s/%s ${OLDGW}\n' % (ip, mask))
-
-    downfile.write('\n\nrm /tmp/pptp_oldgw\n')
-
-    upfile.close()
-    downfile.close()
-
-    os.chmod('ip-up', 00755)
-    os.chmod('ip-down', 00755)
-
-
-def generate_mac_ipsec(_):
-    results = fetch_ip_data()
-
-    upscript_header = """\
-#!/bin/sh
-export PATH="/bin:/sbin:/usr/sbin:/usr/bin"
-
-OLDGW=`netstat -nr | grep '^default' | grep -v 'utun' | sed 's/default *\\([0-9\.]*\\) .*/\\1/'`
+OLDGW=`netstat -nr | grep '^default' | grep -v 'utun' | sed 's/default *\([0-9\.]*\) .*/\1/'`
 echo $OLDGW
-if [ ! -e /tmp/ipsec_oldgw ]; then
-    echo "${OLDGW}" > /tmp/ipsec_oldgw
-fi
+echo "${OLDGW}" > /tmp/temp.txt
 
 dscacheutil -flushcache
+
+
 """
 
     downscript_header = """\
 #!/bin/sh
 export PATH="/bin:/sbin:/usr/sbin:/usr/bin"
 
-if [ ! -e /tmp/ipsec_oldgw ]; then
+if [ ! -e /tmp/temp.txt ]; then
         exit 0
 fi
 
-OLDGW=`cat /tmp/ipsec_oldgw`
+OLDGW=`cat /tmp/temp.txt`
 """
 
-    upfile = open('phase1-up.sh', 'w')
-    downfile = open('phase1-down.sh', 'w')
+    upfile = open('./macOS/addRoute.sh', 'w')
+    downfile = open('./macOS/deleteRoute.sh', 'w')
 
     upfile.write(upscript_header)
     downfile.write(downscript_header)
@@ -192,39 +52,52 @@ OLDGW=`cat /tmp/ipsec_oldgw`
         upfile.write('route add %s/%s "${OLDGW}"\n' % (ip, mask))
         downfile.write('route delete %s/%s ${OLDGW}\n' % (ip, mask))
 
-    downfile.write('\n\nrm /tmp/ipsec_oldgw\n')
 
     upfile.close()
     downfile.close()
 
-    os.chmod('phase1-up.sh', 00755)
-    os.chmod('phase1-down.sh', 00755)
+    os.chmod('addRoute.sh', 00755)
+    os.chmod('deleteRoute.sh', 00755)
 
 
 def generate_win(metric):
     results = fetch_ip_data()
 
     upscript_header = """\
-@echo off
-for /F "tokens=3" %%* in ('route print ^| findstr "\\<0.0.0.0\\>"') do set "gw=%%*"
+    
+:start
+
+for /F %%i in ('ping www.baidu.com -n 1') do (set com=%%i)
+echo %com%
+if "%com%"=="Ping" (
+echo Disconnect...
+timeout /T 10
+goto start
+) else (
+echo Connected!
+timeout /T 3
+)
+
+for /F "tokens=3" %%* in ('route print ^| findstr "\<0.0.0.0\>"') do set "gw=%%*"
+ipconfig /flushdns
+
 """
 
-    upfile = open('vpnup.bat','w')
-    downfile = open('vpndown.bat','w')
+    upscript_tail = """\
 
+echo Complete!
+timeout /T 5
+"""
+    upfile = open('./Windows/Refresh.bat','w')
+    upfile.write('@echo off')
     upfile.write(upscript_header)
-    upfile.write('ipconfig /flushdns\n\n')
-
-    downfile.write("@echo off")
-    downfile.write('\n')
-
     for ip, mask, _ in results:
         upfile.write('route add %s mask %s %s metric %d\n' %
                      (ip, mask, "%gw%", metric))
-        downfile.write('route delete %s\n' % ip)
 
+    upfile.write(upscript_tail)
     upfile.close()
-    downfile.close()
+
 
 def fetch_ip_data():
     url = 'http://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest'
@@ -263,16 +136,11 @@ def main():
                  description="Generate routing rules for VPN users in China.")
     parser.add_argument('-p',
                         dest='platform',
-                        default='openvpn',
+                        default='mac',
                         nargs='?',
-                        choices=['openvpn', 'old', 'mac', 'linux', 'win'],
+                        choices=['mac', 'linux', 'win'],
                         help="target platform")
-    parser.add_argument('-t',
-                        dest='type',
-                        default='ppp',
-                        nargs='?',
-                        choices=['ppp', 'ipsec'],
-                        help='VPN Type. ipsec for CISCO ipsec.')
+
     parser.add_argument('-m',
                         dest='metric',
                         default=5,
@@ -281,20 +149,10 @@ def main():
                         help="metric")
 
     args = parser.parse_args()
-
-    if args.platform.lower() == 'openvpn':
-        generate_ovpn(args.metric)
-    elif args.platform.lower() == 'old':
-        generate_old(args.metric)
-    elif args.platform.lower() == 'linux':
+    if args.platform.lower() == 'linux':
         generate_linux(args.metric)
     elif args.platform.lower() == 'mac':
-        if args.type.lower() == 'ppp':
-            generate_mac(args.metric)
-        elif args.type.lower() == 'ipsec':
-            generate_mac_ipsec(args.metric)
-        else:
-            exit(1)
+        generate_mac(args.metric)
     elif args.platform.lower() == 'win':
         generate_win(args.metric)
     else:

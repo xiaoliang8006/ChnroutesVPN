@@ -11,7 +11,7 @@ touch /tmp/temp.txt
 while true
 do
 #历史路由
-b=$(cat /tmp/temp.txt)
+b=$(head -1 /tmp/temp.txt)
 #当前路由
 a=$(netstat -nr | grep '^default' | grep -v 'utun' | sed 's/default *\([0-9\.]*\) .*/\1/')
 #刚开机时只有当前路由没有历史路由

@@ -1,14 +1,12 @@
 #!/bin/sh
 #export PATH="/bin:/sbin:/usr/sbin:/usr/bin"
 
-OLDGW=`netstat -nr | grep '^default' | grep -v 'utun' | sed 's/default *\([0-9\.]*\) .*/\1/'`
-echo $OLDGW
-
-
-echo "${OLDGW}" > /tmp/temp.txt
-
+TEMP=`netstat -nr | grep '^default' | grep -v 'utun' | sed 's/default *\([0-9\.]*\) .*/\1/'`
+echo "${TEMP}" > /tmp/temp.txt
+OLDGW=`head -1 /tmp/temp.txt`
 
 dscacheutil -flushcache
+
 route add 1.0.1.0/24 "${OLDGW}"
 route add 1.0.2.0/23 "${OLDGW}"
 route add 1.0.8.0/21 "${OLDGW}"

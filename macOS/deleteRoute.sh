@@ -5,7 +5,8 @@ if [ ! -e /tmp/temp.txt ]; then
         exit 0
 fi
 
-OLDGW=`cat /tmp/temp.txt`
+OLDGW=`head -1 /tmp/temp.txt`
+
 route delete 1.0.1.0/24 ${OLDGW}
 route delete 1.0.2.0/23 ${OLDGW}
 route delete 1.0.8.0/21 ${OLDGW}
